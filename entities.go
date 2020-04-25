@@ -43,9 +43,12 @@ func (c *Cell) onConsume(entity *Entity) {
 }
 
 func (c *Cell) move(delta float64) {
-	movement := 1.0 / c.Radius * delta * 150
-	c.Position.X += movement
-	//c.Position.Y += movement
+
+	movement := 1.0 / c.Radius * delta * 250
+	mP := c.Owner.Mouse
+
+	c.Position.X += movement * mP.X
+	c.Position.Y += movement * mP.Y
 }
 
 func (c *Cell) eat(qt *Quadtree) {

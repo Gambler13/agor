@@ -25,6 +25,13 @@ func getDistance(a, b Position) float64 {
 	return math.Sqrt(q(b.X-a.X) * q(b.Y-a.Y))
 }
 
+func sub(a, b Position) Position {
+	return Position{
+		X: a.X - b.X,
+		Y: a.Y - b.Y,
+	}
+}
+
 func q(a float64) float64 {
 	return a * a
 }
@@ -86,4 +93,8 @@ func centroid(points []Position) Position {
 	center.Y = center.Y / totalPoints
 
 	return center
+}
+
+func normalizeVector(p Position) {
+
 }

@@ -52,8 +52,12 @@ func InitWorld(b Bounds) World {
 		i++
 	}
 
-	p := Player{
+	p1 := Player{
 		Id: uint(rand.Int()),
+		Mouse: Position{
+			X: 1,
+			Y: 0,
+		},
 	}
 
 	c := &Cell{
@@ -69,10 +73,36 @@ func InitWorld(b Bounds) World {
 			Killer: 0,
 			Color:  colornames.Red,
 		},
-		Owner: p,
+		Owner: p1,
 	}
 
-	p.Cells = append(p.Cells, c)
+	p1.Cells = append(p1.Cells, c)
+
+	p2 := Player{
+		Id: uint(rand.Int()),
+		Mouse: Position{
+			X: -1,
+			Y: 0,
+		},
+	}
+
+	c2 := &Cell{
+		Entity: Entity{
+			Circle: Circle{
+				Radius: 20,
+				Position: Position{
+					X: 300,
+					Y: 100,
+				},
+			},
+			Id:     11,
+			Killer: 0,
+			Color:  colornames.Beige,
+		},
+		Owner: p2,
+	}
+
+	p2.Cells = append(p2.Cells, c2)
 
 	ct := Quadtree{
 		Bounds:     b,
@@ -91,7 +121,7 @@ func InitWorld(b Bounds) World {
 	}
 
 	return World{
-		Players:  []Player{p},
+		Players:  []Player{p1, p2},
 		CellTree: ct,
 		Food:     food,
 		FoodTree: ft,
@@ -125,13 +155,20 @@ func (g *GameLoop) onUpdate(delta float64) {
 	p := g.World.Players
 
 	//Update cells
-	g.World.CellTree.Clear()
 	for i := range p {
 		for j := range p[i].Cells {
 			p[i].Cells[j].move(delta)
 			p[i].Cells[j].eat(&g.World.FoodTree)
-			//p[i].Cells[j].eat(g.World.CellTree)
-			g.World.CellTree.Insert(p[i].Cells[j])
+			p[i].Cells[j].eat(&g.World.CellTree)
+		}
+	}
+
+	g.World.CellTree.Clear()
+	for i := range p {
+		for j := range p[i].Cells {
+			if p[i].Cells[j].getEntity().Killer == 0 {
+				g.World.CellTree.Insert(p[i].Cells[j])
+			}
 		}
 	}
 
@@ -147,7 +184,8 @@ func (g *GameLoop) onUpdate(delta float64) {
 }
 
 type Player struct {
-	Id    uint
+	Id uint
+	//Normalized vector based on players center
 	Mouse Position
 	Cells []*Cell
 }
@@ -159,8 +197,9 @@ func (p *Player) getCenter() Position {
 	}
 
 	return centroid(pos)
-
 }
-func (p *Player) getDistance(pos Position) float64 {
-	return getDistance(p.Mouse, pos)
+
+//Return normalized vector from cell center to mouse position
+func (p *Player) getMouseVector() Position {
+	return sub(p.Mouse, p.getCenter())
 }
