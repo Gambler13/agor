@@ -205,8 +205,8 @@ func (p *Player) getMouseVector() Position {
 }
 
 //Distribute eaten food between players cell
-func (p *Player) distributeFood(f Food) {
-	r := f.Radius * 0.075
+func (p *Player) distributeFood(f EntityImpl) {
+	r := f.getEntity().Radius * 0.075
 	r = r / float64(len(p.Cells))
 	for i := range p.Cells {
 		p.Cells[i].Radius += r

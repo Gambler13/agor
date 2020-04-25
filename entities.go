@@ -59,8 +59,7 @@ func (c *Cell) eat(qt *Quadtree) {
 		}
 
 		if entImpl.Radius < c.Radius && entImpl.Killer == 0 {
-			rad := entImpl.Radius * 0.075
-			c.Owner.distributeFood(rad)
+			c.Owner.distributeFood(e)
 			e.onConsume(c.getEntity())
 			fmt.Printf("eat eat %d\n", entImpl.Id)
 
