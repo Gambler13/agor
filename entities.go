@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/image/colornames"
 	"image/color"
 	"math/rand"
 )
 
 type Entity struct {
 	Circle
-	Id     uint
-	Killer uint
+	Id     int
+	Killer int
 	Color  color.Color
 }
 
@@ -28,7 +29,22 @@ func (e Entity) Bounds() Bounds {
 
 type Cell struct {
 	Entity
-	Owner Player
+	Owner *Player
+}
+
+func (w *World) NewCell(owner *Player) Cell {
+	return Cell{
+		Entity: Entity{
+			Circle: Circle{
+				Radius:   20,
+				Position: getRandomPosition(w.Bounds, 10),
+			},
+			Id:     rand.Int(),
+			Killer: 0,
+			Color:  colornames.Beige,
+		},
+		Owner: owner,
+	}
 }
 
 func (c *Cell) onConsume(entity *Entity) {
@@ -80,7 +96,7 @@ func (c *Cell) split() *Cell {
 				},
 				Radius: newRad,
 			},
-			Id:     uint(rand.Int()),
+			Id:     rand.Int(),
 			Killer: 0,
 			Color:  c.Color,
 		},

@@ -1,13 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"github.com/faiface/pixel/pixelgl"
-	"github.com/h8gi/canvas"
-	"golang.org/x/image/colornames"
-	"time"
-)
-
 var canvasWidth = 640.0
 var canvasHeight = 400.0
 
@@ -26,104 +18,111 @@ func main() {
 	}
 
 	go gl.run()
-
-	c := canvas.NewCanvas(&canvas.CanvasConfig{
-		Width:     int(canvasWidth),
-		Height:    int(canvasHeight),
-		FrameRate: 30,
-		Title:     "Hello Canvas!",
-	})
-
-	c.Setup(func(ctx *canvas.Context) {
-		ctx.SetColor(colornames.White)
-		ctx.Clear()
-		ctx.SetColor(colornames.Green)
-		ctx.SetLineWidth(1)
-	})
-
-	var lastDraw time.Time
-
-	c.Draw(func(ctx *canvas.Context) {
-		ctx.Clear()
-
-		p := w.Players[0].getCenter()
-		dx := canvasWidth/2 - p.X
-		dy := canvasHeight/2 - p.Y
-		width := 1200.0
-		height := 800.0
-
-		ctx.Push()
-		ctx.Translate(dx, dy)
-		ctx.SetColor(colornames.White)
-		ctx.DrawRectangle(0, 0, width, height)
-		ctx.Fill()
-		ctx.Pop()
-
-		ctx.Push()
-		ctx.Translate(dx, dy)
-		ctx.SetColor(colornames.Blue)
-		ctx.DrawCircle(p.X, p.Y, 3)
-		ctx.Stroke()
-		ctx.DrawCircle(100, 100, 2)
-		ctx.Stroke()
-		ctx.Pop()
-
-		ctx.Push()
-		ents := gl.World.CellTree.RetrieveViewIntersections(Bounds{
-			X:      p.X,
-			Y:      p.Y,
-			Width:  300,
-			Height: 300,
-		})
-		ents2 := gl.World.FoodTree.RetrieveViewIntersections(Bounds{
-			X:      p.X,
-			Y:      p.Y,
-			Width:  300,
-			Height: 300,
+	/*
+		c := canvas.NewCanvas(&canvas.CanvasConfig{
+			Width:     int(canvasWidth),
+			Height:    int(canvasHeight),
+			FrameRate: 30,
+			Title:     "Hello Canvas!",
 		})
 
-		ents = append(ents, ents2...)
+		c.Setup(func(ctx *canvas.Context) {
+			ctx.SetColor(colornames.White)
+			ctx.Clear()
+			ctx.SetColor(colornames.Green)
+			ctx.SetLineWidth(1)
+		})
 
-		ctx.Push()
-		ctx.Translate(dx, dy)
-		ctx.SetColor(colornames.Orange)
-		ctx.DrawRectangle(p.X-150, p.Y-150, 300, 300)
-		ctx.Stroke()
-		ctx.Pop()
+		var lastDraw time.Time
 
-		for _, e := range ents {
-			entity := e.getEntity()
-			ctx.SetColor(entity.Color)
 
-			pos := entity.Position
+
+		c.Draw(func(ctx *canvas.Context) {
+			ctx.Clear()
+
+			p := w.Players[0].getCenter()
+			dx := canvasWidth/2 - p.X
+			dy := canvasHeight/2 - p.Y
+			width := 1200.0
+			height := 800.0
 
 			ctx.Push()
 			ctx.Translate(dx, dy)
-			ctx.DrawCircle(pos.X, pos.Y, e.getEntity().Radius)
+			ctx.SetColor(colornames.White)
+			ctx.DrawRectangle(0, 0, width, height)
 			ctx.Fill()
-
-			if e.getEntity().Killer != 0 {
-				ctx.SetColor(colornames.Black)
-				ctx.DrawCircle(pos.X, pos.Y, e.getEntity().Radius)
-				ctx.Stroke()
-			}
 			ctx.Pop()
 
-		}
+			ctx.Push()
+			ctx.Translate(dx, dy)
+			ctx.SetColor(colornames.Blue)
+			ctx.DrawCircle(p.X, p.Y, 3)
+			ctx.Stroke()
+			ctx.DrawCircle(100, 100, 2)
+			ctx.Stroke()
+			ctx.Pop()
 
-		ctx.Pop()
+			ctx.Push()
+			ents := gl.World.CellTree.RetrieveViewIntersections(Bounds{
+				X:      p.X,
+				Y:      p.Y,
+				Width:  300,
+				Height: 300,
+			})
+			ents2 := gl.World.FoodTree.RetrieveViewIntersections(Bounds{
+				X:      p.X,
+				Y:      p.Y,
+				Width:  300,
+				Height: 300,
+			})
 
-		if ctx.IsKeyPressed(pixelgl.KeyUp) {
-			w.Players[0].splitCells()
-		}
-		dt := time.Now().Sub(lastDraw)
+			ents = append(ents, ents2...)
 
-		ctx.Push()
-		ctx.SetRGB(1, 0, 0)
-		ctx.DrawString(fmt.Sprintf("FPS: %.0f", 1/dt.Seconds()), 50, canvasHeight-50)
-		ctx.Pop()
+			ctx.Push()
+			ctx.Translate(dx, dy)
+			ctx.SetColor(colornames.Orange)
+			ctx.DrawRectangle(p.X-150, p.Y-150, 300, 300)
+			ctx.Stroke()
+			ctx.Pop()
 
-		lastDraw = time.Now()
+			for _, e := range ents {
+				entity := e.getEntity()
+				ctx.SetColor(entity.Color)
 
-	})
+				pos := entity.Position
+
+				ctx.Push()
+				ctx.Translate(dx, dy)
+				ctx.DrawCircle(pos.X, pos.Y, e.getEntity().Radius)
+				ctx.Fill()
+
+				if e.getEntity().Killer != 0 {
+					ctx.SetColor(colornames.Black)
+					ctx.DrawCircle(pos.X, pos.Y, e.getEntity().Radius)
+					ctx.Stroke()
+				}
+				ctx.Pop()
+
+			}
+
+			ctx.Pop()
+
+			if ctx.IsKeyPressed(pixelgl.KeyUp) {
+				w.Players[0].splitCells()
+			}
+			dt := time.Now().Sub(lastDraw)
+
+			ctx.Push()
+			ctx.SetRGB(1, 0, 0)
+			ctx.DrawString(fmt.Sprintf("FPS: %.0f", 1/dt.Seconds()), 50, canvasHeight-50)
+			ctx.Pop()
+
+			lastDraw = time.Now()
+
+		})
+
+	*/
+
+	startServer(&gl.World)
+
 }

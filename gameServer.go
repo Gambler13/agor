@@ -1,6 +1,7 @@
 package main
 
 import (
+	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
 	"image/color"
 	"math/rand"
@@ -14,7 +15,7 @@ type GameLoop struct {
 }
 
 type World struct {
-	Players  []Player
+	Players  map[string]*Player
 	CellTree Quadtree
 	Food     []EntityImpl
 	FoodTree Quadtree
@@ -38,7 +39,7 @@ func InitWorld(b Bounds) World {
 		}
 
 		f := &Food{Entity{
-			Id: uint(rand.Uint32()),
+			Id: rand.Int(),
 			Circle: Circle{
 				Radius:   5,
 				Position: getRandomPosition(b, 1),
@@ -52,8 +53,9 @@ func InitWorld(b Bounds) World {
 		i++
 	}
 
-	p1 := Player{
-		Id: uint(rand.Int()),
+	p1 := &Player{
+		Id:       rand.Int(),
+		SocketId: "aaaa",
 		Mouse: Position{
 			X: 1,
 			Y: 0,
@@ -78,8 +80,9 @@ func InitWorld(b Bounds) World {
 
 	p1.Cells = append(p1.Cells, c)
 
-	p2 := Player{
-		Id: uint(rand.Int()),
+	p2 := &Player{
+		SocketId: "bbb",
+		Id:       rand.Int(),
 		Mouse: Position{
 			X: -1,
 			Y: 0,
@@ -120,8 +123,12 @@ func InitWorld(b Bounds) World {
 		ft.Insert(food[i])
 	}
 
+	player := make(map[string]*Player)
+	player[p1.SocketId] = p1
+	player[p2.SocketId] = p2
+
 	return World{
-		Players:  []Player{p1, p2},
+		Players:  player,
 		CellTree: ct,
 		Food:     food,
 		FoodTree: ft,
@@ -184,10 +191,12 @@ func (g *GameLoop) onUpdate(delta float64) {
 }
 
 type Player struct {
-	Id uint
+	Id       int
+	SocketId string
 	//Normalized vector based on players center
 	Mouse Position
 	Cells []*Cell
+	conn  socketio.Conn
 }
 
 func (p *Player) getCenter() Position {
@@ -224,20 +233,34 @@ func (p *Player) splitCells() {
 	p.Cells = newCells
 }
 
-func (gl *GameLoop) addPlayer(p Player) error {
-	gl.World.Players = append(gl.World.Players, p)
-	return nil
+func (w *World) addNewPlayer(conn socketio.Conn) {
+
+	player := &Player{
+		Id:       rand.Int(),
+		SocketId: conn.ID(),
+		Mouse:    Position{},
+		conn:     conn,
+	}
+
+	w.NewCell(player)
+
+	w.Players[conn.ID()] = player
 }
 
-func (gl *GameLoop) removePlayer(p Player) error {
-	players := gl.World.Players
-	for i := range players {
-		if players[i].Id == p.Id {
-			players[i] = players[len(players)-1] // Copy last element to index i.
-			players[len(players)-1] = Player{}   // Erase last element (write zero value).
-			players = players[:len(players)-1]
-			break
-		}
-	}
-	return nil
+func (w *World) removePlayer(socketId string) {
+	delete(w.Players, socketId)
+}
+
+func (w *World) handlePosition(id string, mousePos Position) {
+	p := w.Players[id]
+	p.Mouse = mousePos
+}
+
+func (w *World) handleSplit(id string) {
+	p := w.Players[id]
+	p.splitCells()
+}
+
+func (w *World) handleDiet(id string) {
+	//TODO implement
 }
