@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/h8gi/canvas"
 	"golang.org/x/image/colornames"
+	"time"
 )
 
 var canvasWidth = 640.0
@@ -38,6 +40,8 @@ func main() {
 		ctx.SetColor(colornames.Green)
 		ctx.SetLineWidth(1)
 	})
+
+	var lastDraw time.Time
 
 	c.Draw(func(ctx *canvas.Context) {
 		ctx.Clear()
@@ -115,6 +119,14 @@ func main() {
 			ctx.Clear()
 			ctx.Pop()
 		}
+		dt := time.Now().Sub(lastDraw)
+
+		ctx.Push()
+		ctx.SetRGB(1, 0, 0)
+		ctx.DrawString(fmt.Sprintf("FPS: %.0f", 1/dt.Seconds()), 50, canvasHeight-50)
+		ctx.Pop()
+
+		lastDraw = time.Now()
 
 	})
 }

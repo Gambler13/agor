@@ -123,6 +123,8 @@ func (g *GameLoop) run() {
 
 func (g *GameLoop) onUpdate(delta float64) {
 	p := g.World.Players
+
+	//Update cells
 	g.World.CellTree.Clear()
 	for i := range p {
 		for j := range p[i].Cells {
@@ -130,6 +132,15 @@ func (g *GameLoop) onUpdate(delta float64) {
 			p[i].Cells[j].eat(&g.World.FoodTree)
 			//p[i].Cells[j].eat(g.World.CellTree)
 			g.World.CellTree.Insert(p[i].Cells[j])
+		}
+	}
+
+	//Update food
+	g.World.FoodTree.Clear()
+	for i := range g.World.Food {
+		f := g.World.Food[i]
+		if f.getEntity().Killer == 0 {
+			g.World.FoodTree.Insert(f)
 		}
 	}
 
