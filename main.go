@@ -65,12 +65,20 @@ func main() {
 		ctx.Pop()
 
 		ctx.Push()
-		ents := gl.World.Quadtree.RetrieveViewIntersections(Bounds{
+		ents := gl.World.CellTree.RetrieveViewIntersections(Bounds{
 			X:      p.X,
 			Y:      p.Y,
 			Width:  300,
 			Height: 300,
 		})
+		ents2 := gl.World.FoodTree.RetrieveViewIntersections(Bounds{
+			X:      p.X,
+			Y:      p.Y,
+			Width:  300,
+			Height: 300,
+		})
+
+		ents = append(ents, ents2...)
 
 		ctx.Push()
 		ctx.Translate(dx, dy)

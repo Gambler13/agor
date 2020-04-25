@@ -42,25 +42,13 @@ func (c *Cell) onConsume(entity *Entity) {
 	c.Killer = entity.Id
 }
 
-func (c *Cell) onUpdate(qt *Quadtree, delta float64) {
-	for i := range qt.Objects {
-		if qt.Objects[i].getEntity().Id == c.Id {
-			//copy(qt.Objects[i:], qt.Objects[i+1:])
-			break
-		}
-	}
-	c.move(delta)
-	//qt.Insert(c)
-	c.eat(*qt)
-}
-
 func (c *Cell) move(delta float64) {
 	movement := 1.0 / c.Radius * delta * 150
 	c.Position.X += movement
 	//c.Position.Y += movement
 }
 
-func (c *Cell) eat(qt Quadtree) {
+func (c *Cell) eat(qt *Quadtree) {
 	intersections := qt.RetrieveIntersections(c)
 	for i := range intersections {
 		e := intersections[i]
@@ -114,6 +102,5 @@ type EntityImpl interface {
 	onAdd()
 	onRemove()
 	onConsume(entity *Entity)
-	onUpdate(qt *Quadtree, delta float64)
 	getEntity() *Entity
 }
