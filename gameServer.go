@@ -26,7 +26,7 @@ func InitWorld(b Bounds) World {
 	var food []EntityImpl
 
 	i := 0
-	for i < 100 {
+	for i < 500 {
 
 		var colName color.Color
 		if i < 100 {
@@ -40,9 +40,9 @@ func InitWorld(b Bounds) World {
 		f := &Food{Entity{
 			Id: uint(rand.Uint32()),
 			Circle: Circle{
-				Radius: 5,
-				//Position: getRandomPosition(b, 1),
-				Position: Position{X: float64(10.0 * i), Y: float64(10.0 * i)},
+				Radius:   5,
+				Position: getRandomPosition(b, 1),
+				//Position: Position{X: float64(10.0 * i), Y: float64(10.0 * i)},
 			},
 			Killer: 0,
 			Color:  colName,
@@ -202,4 +202,42 @@ func (p *Player) getCenter() Position {
 //Return normalized vector from cell center to mouse position
 func (p *Player) getMouseVector() Position {
 	return sub(p.Mouse, p.getCenter())
+}
+
+//Distribute eaten food between players cell
+func (p *Player) distributeFood(f Food) {
+	r := f.Radius * 0.075
+	r = r / float64(len(p.Cells))
+	for i := range p.Cells {
+		p.Cells[i].Radius += r
+	}
+}
+
+func (p *Player) splitCells() {
+	newCells := make([]*Cell, len(p.Cells)*2)
+	for i := range p.Cells {
+		c1 := p.Cells[i]
+		c2 := c1.split()
+		newCells[i*2] = c1
+		newCells[i*2+1] = c2
+	}
+	p.Cells = newCells
+}
+
+func (gl *GameLoop) addPlayer(p Player) error {
+	gl.World.Players = append(gl.World.Players, p)
+	return nil
+}
+
+func (gl *GameLoop) removePlayer(p Player) error {
+	players := gl.World.Players
+	for i := range players {
+		if players[i].Id == p.Id {
+			players[i] = players[len(players)-1] // Copy last element to index i.
+			players[len(players)-1] = Player{}   // Erase last element (write zero value).
+			players = players[:len(players)-1]
+			break
+		}
+	}
+	return nil
 }

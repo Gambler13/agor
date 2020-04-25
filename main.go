@@ -114,10 +114,7 @@ func main() {
 		ctx.Pop()
 
 		if ctx.IsKeyPressed(pixelgl.KeyUp) {
-			ctx.Push()
-			ctx.SetColor(colornames.White)
-			ctx.Clear()
-			ctx.Pop()
+			w.Players[0].splitCells()
 		}
 		dt := time.Now().Sub(lastDraw)
 

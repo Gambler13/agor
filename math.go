@@ -88,7 +88,7 @@ func centroid(points []Position) Position {
 		center.Y += points[i].Y
 	}
 
-	var totalPoints = float64(len(points) / 2)
+	var totalPoints = float64(len(points))
 	center.X = center.X / totalPoints
 	center.Y = center.Y / totalPoints
 

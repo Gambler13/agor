@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"math/rand"
 )
 
 type Entity struct {
@@ -30,14 +31,6 @@ type Cell struct {
 	Owner Player
 }
 
-func (c *Cell) onAdd() {
-	panic("implement me")
-}
-
-func (c *Cell) onRemove() {
-	panic("implement me")
-}
-
 func (c *Cell) onConsume(entity *Entity) {
 	c.Killer = entity.Id
 }
@@ -55,27 +48,51 @@ func (c *Cell) eat(qt *Quadtree) {
 	intersections := qt.RetrieveIntersections(c)
 	for i := range intersections {
 		e := intersections[i]
-		ee := e.getEntity()
-		if ee.Radius < c.Radius && ee.Killer == 0 {
-			c.Radius += ee.Radius * 0.075
+		entImpl := e.getEntity()
+
+		//Check if cell eat itself
+		interC, ok := e.(*Cell)
+		if ok {
+			if interC.Owner.Id == c.Owner.Id {
+				continue
+			}
+		}
+
+		if entImpl.Radius < c.Radius && entImpl.Killer == 0 {
+			rad := entImpl.Radius * 0.075
+			c.Owner.distributeFood(rad)
 			e.onConsume(c.getEntity())
-			fmt.Printf("eat eat %d\n", ee.Id)
+			fmt.Printf("eat eat %d\n", entImpl.Id)
 
 		}
 	}
+}
 
+func (c *Cell) split() *Cell {
+	newRad := c.Radius / 2
+	c.Radius = newRad
+
+	newCell := &Cell{
+		Entity: Entity{
+			Circle: Circle{
+				Position: Position{
+					X: c.X,
+					Y: c.Y,
+				},
+				Radius: newRad,
+			},
+			Id:     uint(rand.Int()),
+			Killer: 0,
+			Color:  c.Color,
+		},
+		Owner: c.Owner,
+	}
+
+	return newCell
 }
 
 type Food struct {
 	Entity
-}
-
-func (f *Food) onAdd() {
-	panic("implement me")
-}
-
-func (f *Food) onRemove() {
-	panic("implement me")
 }
 
 func (f *Food) onConsume(entity *Entity) {
@@ -89,21 +106,11 @@ type Virus struct {
 	Entity
 }
 
-func (v *Virus) onAdd() {
-	panic("implement me")
-}
-
-func (v *Virus) onRemove() {
-	panic("implement me")
-}
-
 func (v *Virus) onConsume(entity *Entity) {
 	panic("implement me")
 }
 
 type EntityImpl interface {
-	onAdd()
-	onRemove()
 	onConsume(entity *Entity)
 	getEntity() *Entity
 }
