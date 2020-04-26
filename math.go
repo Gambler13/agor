@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"image/color"
 	"math"
 	"math/rand"
 )
@@ -95,6 +97,7 @@ func centroid(points []Position) Position {
 	return center
 }
 
-func normalizeVector(p Position) {
-
+func hexColor(c color.Color) string {
+	rgba := color.RGBAModel.Convert(c).(color.RGBA)
+	return fmt.Sprintf("#%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 }

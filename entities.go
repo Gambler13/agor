@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"golang.org/x/image/colornames"
 	"image/color"
 	"math/rand"
@@ -77,8 +76,6 @@ func (c *Cell) eat(qt *Quadtree) {
 		if entImpl.Radius < c.Radius && entImpl.Killer == 0 {
 			c.Owner.distributeFood(e)
 			e.onConsume(c.getEntity())
-			fmt.Printf("eat eat %d\n", entImpl.Id)
-
 		}
 	}
 }

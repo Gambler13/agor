@@ -23,21 +23,21 @@ func startServer(w *World) {
 		return nil
 	})
 
-	server.OnEvent("/action", "position", func(s socketio.Conn, msg string) string {
+	server.OnEvent("/", "position", func(s socketio.Conn, msg string) {
 		var pos api.Mouse
 		json.Unmarshal([]byte(msg), &pos)
 		w.handlePosition(s.ID(), Position{
 			X: pos.X,
 			Y: pos.Y,
 		})
+
+	})
+
+	server.OnEvent("/", "split", func(s socketio.Conn, msg string) string {
 		return ""
 	})
 
-	server.OnEvent("/action", "split", func(s socketio.Conn, msg string) string {
-		return ""
-	})
-
-	server.OnEvent("/action", "diet", func(s socketio.Conn, msg string) string {
+	server.OnEvent("/", "diet", func(s socketio.Conn, msg string) string {
 		return ""
 	})
 

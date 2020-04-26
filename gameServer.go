@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
+	"hexhibit.xyz/agor/api"
 	"image/color"
 	"math/rand"
 	"time"
@@ -188,6 +190,10 @@ func (g *GameLoop) onUpdate(delta float64) {
 		}
 	}
 
+	for i := range p {
+		g.World.updatePlayers(p[i].SocketId)
+	}
+
 }
 
 type Player struct {
@@ -241,8 +247,9 @@ func (w *World) addNewPlayer(conn socketio.Conn) {
 		Mouse:    Position{},
 		conn:     conn,
 	}
-
-	w.NewCell(player)
+	//TODO add cell method on player or somethinng like thaht
+	c := w.NewCell(player)
+	player.Cells = []*Cell{&c}
 
 	w.Players[conn.ID()] = player
 }
@@ -263,4 +270,46 @@ func (w *World) handleSplit(id string) {
 
 func (w *World) handleDiet(id string) {
 	//TODO implement
+}
+
+func (w *World) updatePlayers(id string) {
+	for _, p := range w.Players {
+
+		pos := p.getCenter()
+
+		ents := w.CellTree.RetrieveViewIntersections(Bounds{
+			X:      pos.X,
+			Y:      pos.Y,
+			Width:  300,
+			Height: 300,
+		})
+		ents2 := w.FoodTree.RetrieveViewIntersections(Bounds{
+			X:      pos.X,
+			Y:      pos.Y,
+			Width:  300,
+			Height: 300,
+		})
+
+		ents = append(ents, ents2...)
+
+		results := make([]api.Entity, len(ents))
+
+		for i := range ents {
+			entityImpl := ents[i]
+			e := entityImpl.getEntity()
+			results[i] = api.Entity{
+				X:      e.X,
+				Y:      e.Y,
+				Radius: e.Radius,
+				Color:  hexColor(e.Color),
+			}
+		}
+
+		data, _ := json.Marshal(results)
+		posData, _ := json.Marshal(api.Entity{Y: pos.Y, X: pos.X})
+
+		if p.conn != nil {
+			p.conn.Emit("update", string(posData), string(data))
+		}
+	}
 }
