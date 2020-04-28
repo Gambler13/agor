@@ -339,6 +339,7 @@ func (w *World) updatePlayers(id string) {
 			FoodEaten:  p.foodEaten,
 			CellsEaten: 0,
 			Rank:       1,
+			NumPlayers: len(w.Players),
 		})
 		if err != nil {
 			fmt.Println("error while marhsalling results: " + err.Error())

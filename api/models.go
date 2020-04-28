@@ -14,6 +14,7 @@ type Mouse struct {
 
 type GameStats struct {
 	PlayerId   string
+	NumPlayers int
 	Mass       float64
 	FoodEaten  int
 	CellsEaten int
