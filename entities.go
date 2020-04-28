@@ -3,6 +3,7 @@ package main
 import (
 	"golang.org/x/image/colornames"
 	"image/color"
+	"math"
 	"math/rand"
 )
 
@@ -52,11 +53,18 @@ func (c *Cell) onConsume(entity *Entity) {
 
 func (c *Cell) move(delta float64) {
 
-	movement := 1.0 / c.Radius * delta * 250
+	movement := 1.0 / c.Radius * delta * 350
 	mP := c.Owner.Mouse
 
-	c.Position.X += movement * mP.X
-	c.Position.Y += movement * mP.Y
+	vec := math.Sqrt(q(mP.X) + q(mP.Y))
+
+	if vec != 0.0 {
+		x := movement * (mP.X / vec)
+		y := movement * (mP.Y / vec)
+		c.Position.X += x
+		c.Position.Y += y
+	}
+
 }
 
 func (c *Cell) eat(qt *Quadtree) {

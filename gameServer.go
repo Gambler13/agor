@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
 	"hexhibit.xyz/agor/api"
@@ -166,9 +167,11 @@ func (g *GameLoop) onUpdate(delta float64) {
 	//Update cells
 	for i := range p {
 		for j := range p[i].Cells {
-			p[i].Cells[j].move(delta)
-			p[i].Cells[j].eat(&g.World.FoodTree)
-			p[i].Cells[j].eat(&g.World.CellTree)
+			c := p[i].Cells[j]
+			c.move(delta)
+			//TODO Check bounds after move
+			c.eat(&g.World.FoodTree)
+			c.eat(&g.World.CellTree)
 		}
 	}
 
@@ -305,8 +308,14 @@ func (w *World) updatePlayers(id string) {
 			}
 		}
 
-		data, _ := json.Marshal(results)
-		posData, _ := json.Marshal(api.Entity{Y: pos.Y, X: pos.X})
+		data, err := json.Marshal(results)
+		if err != nil {
+			fmt.Println("error while marhsalling results: " + err.Error())
+		}
+		posData, err := json.Marshal(api.Entity{Y: pos.Y, X: pos.X})
+		if err != nil {
+			fmt.Println("error while marhsalling results: " + err.Error())
+		}
 
 		if p.conn != nil {
 			p.conn.Emit("update", string(posData), string(data))

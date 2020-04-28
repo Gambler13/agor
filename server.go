@@ -6,6 +6,7 @@ import (
 	"hexhibit.xyz/agor/api"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/googollee/go-socket.io"
 )
@@ -44,6 +45,7 @@ func startServer(w *World) {
 	server.OnEvent("/", "bye", func(s socketio.Conn) string {
 		last := s.Context().(string)
 		s.Emit("bye", last)
+		w.removePlayer(s.ID())
 		s.Close()
 		return last
 	})
@@ -52,6 +54,8 @@ func startServer(w *World) {
 	})
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
 		fmt.Println("closed", reason)
+		w.removePlayer(s.ID())
+		s.Close()
 	})
 	go server.Serve()
 	defer server.Close()
@@ -67,7 +71,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		allowHeaders := "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8084")
+		w.Header().Set("Access-Control-Allow-Origin", os.Getenv("AGOR_ORIGIN"))
 		w.Header().Set("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
