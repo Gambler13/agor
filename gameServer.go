@@ -7,6 +7,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
 	"image/color"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -56,60 +57,6 @@ func InitWorld(b Bounds) World {
 		i++
 	}
 
-	p1 := &Player{
-		Id:       rand.Int(),
-		SocketId: "aaaa",
-		Mouse: Position{
-			X: 1,
-			Y: 0,
-		},
-	}
-
-	c := &Cell{
-		Entity: Entity{
-			Circle: Circle{
-				Radius: 50,
-				Position: Position{
-					X: 100,
-					Y: 100,
-				},
-			},
-			Id:     1,
-			Killer: 0,
-			Color:  colornames.Red,
-		},
-		Owner: p1,
-	}
-
-	p1.Cells = append(p1.Cells, c)
-
-	p2 := &Player{
-		SocketId: "bbb",
-		Id:       rand.Int(),
-		Mouse: Position{
-			X: -1,
-			Y: 0,
-		},
-	}
-
-	c2 := &Cell{
-		Entity: Entity{
-			Circle: Circle{
-				Radius: 20,
-				Position: Position{
-					X: 300,
-					Y: 100,
-				},
-			},
-			Id:     11,
-			Killer: 0,
-			Color:  colornames.Beige,
-		},
-		Owner: p2,
-	}
-
-	p2.Cells = append(p2.Cells, c2)
-
 	ct := Quadtree{
 		Bounds:     b,
 		MaxObjects: 20,
@@ -127,8 +74,6 @@ func InitWorld(b Bounds) World {
 	}
 
 	player := make(map[string]*Player)
-	player[p1.SocketId] = p1
-	player[p2.SocketId] = p2
 
 	return World{
 		Players:  player,
@@ -291,6 +236,8 @@ func (w *World) getLeaderboard() {
 
 }
 
+var nO = make(map[string]int)
+
 func (w *World) updatePlayers(id string) {
 	for _, p := range w.Players {
 
@@ -310,6 +257,13 @@ func (w *World) updatePlayers(id string) {
 		})
 
 		ents = append(ents, ents2...)
+
+		v, ok := nO[id]
+		if ok && math.Abs(float64(v-len(ents))) > 5 {
+			fmt.Printf("--- %d\n", len(ents))
+		}
+
+		nO[id] = len(ents)
 
 		results := make([]api.Entity, len(ents))
 
