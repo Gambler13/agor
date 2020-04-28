@@ -83,6 +83,7 @@ func (c *Cell) eat(qt *Quadtree) {
 
 		if entImpl.Radius < c.Radius && entImpl.Killer == 0 {
 			c.Owner.distributeFood(e)
+			c.Owner.foodEaten++
 			e.onConsume(c.getEntity())
 		}
 	}

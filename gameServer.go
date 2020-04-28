@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gambler13/agor/api"
 	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
-	"hexhibit.xyz/agor/api"
 	"image/color"
 	"math/rand"
 	"time"
@@ -203,9 +203,11 @@ type Player struct {
 	Id       int
 	SocketId string
 	//Normalized vector based on players center
-	Mouse Position
-	Cells []*Cell
-	conn  socketio.Conn
+	Mouse     Position
+	Cells     []*Cell
+	conn      socketio.Conn
+	startTS   time.Time
+	foodEaten int
 }
 
 func (p *Player) getCenter() Position {
@@ -249,6 +251,7 @@ func (w *World) addNewPlayer(conn socketio.Conn) {
 		SocketId: conn.ID(),
 		Mouse:    Position{},
 		conn:     conn,
+		startTS:  time.Now(),
 	}
 	//TODO add cell method on player or somethinng like thaht
 	c := w.NewCell(player)
@@ -273,6 +276,10 @@ func (w *World) handleSplit(id string) {
 
 func (w *World) handleDiet(id string) {
 	//TODO implement
+}
+
+func (w *World) getLeaderboard() {
+
 }
 
 func (w *World) updatePlayers(id string) {
