@@ -1,5 +1,7 @@
 package main
 
+import socketio "github.com/googollee/go-socket.io"
+
 var canvasWidth = 640.0
 var canvasHeight = 400.0
 
@@ -12,9 +14,12 @@ func main() {
 		Height: 900,
 	})
 	gl := GameLoop{
-		tickRate: 50,
-		quit:     nil,
-		World:    w,
+		tickRate:       50,
+		quit:           nil,
+		World:          w,
+		PositionCh:     make(chan PositionMsg, 300),
+		AddPlayerCh:    make(chan socketio.Conn, 20),
+		RemovePlayerCh: make(chan string, 0),
 	}
 
 	go gl.run()
@@ -123,6 +128,6 @@ func main() {
 
 	*/
 
-	startServer(&gl.World)
+	startServer(gl.AddPlayerCh, gl.RemovePlayerCh, gl.PositionCh)
 
 }

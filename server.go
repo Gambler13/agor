@@ -11,26 +11,27 @@ import (
 	"github.com/googollee/go-socket.io"
 )
 
-func startServer(w *World) {
+func startServer(addPlayer chan socketio.Conn, removePlayer chan string, position chan PositionMsg) {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	server.OnConnect("/", func(s socketio.Conn) error {
 		fmt.Println("connected:", s.ID())
-
-		w.addNewPlayer(s)
-
+		addPlayer <- s
 		return nil
 	})
 
 	server.OnEvent("/", "position", func(s socketio.Conn, msg string) {
 		var pos api.Mouse
 		json.Unmarshal([]byte(msg), &pos)
-		w.handlePosition(s.ID(), Position{
+
+		pmsg := PositionMsg{PlayerID: s.ID(), Position: Position{
 			X: pos.X,
 			Y: pos.Y,
-		})
+		}}
+
+		position <- pmsg
 
 	})
 
@@ -45,7 +46,7 @@ func startServer(w *World) {
 	server.OnEvent("/", "bye", func(s socketio.Conn) string {
 		last := s.Context().(string)
 		s.Emit("bye", last)
-		w.removePlayer(s.ID())
+		removePlayer <- s.ID()
 		s.Close()
 		return last
 	})
@@ -54,7 +55,7 @@ func startServer(w *World) {
 	})
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
 		fmt.Println("closed", reason)
-		w.removePlayer(s.ID())
+		removePlayer <- s.ID()
 		s.Close()
 	})
 	go server.Serve()

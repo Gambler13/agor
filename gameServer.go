@@ -13,9 +13,17 @@ import (
 )
 
 type GameLoop struct {
-	tickRate time.Duration
-	quit     chan bool
-	World    World
+	tickRate       time.Duration
+	quit           chan bool
+	World          World
+	PositionCh     chan PositionMsg
+	AddPlayerCh    chan socketio.Conn
+	RemovePlayerCh chan string
+}
+
+type PositionMsg struct {
+	Position
+	PlayerID string
 }
 
 type World struct {
@@ -99,7 +107,12 @@ func (g *GameLoop) run() {
 			delta := float64(now-timeStart) / 1000000000
 			timeStart = now
 			g.onUpdate(delta)
-
+		case p := <-g.PositionCh:
+			g.World.handlePosition(p.PlayerID, p.Position)
+		case c := <-g.AddPlayerCh:
+			g.World.addNewPlayer(c)
+		case i := <-g.RemovePlayerCh:
+			g.World.removePlayer(i)
 		case <-g.quit:
 			ticker.Stop()
 		}
