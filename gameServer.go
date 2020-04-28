@@ -170,6 +170,7 @@ func (g *GameLoop) onUpdate(delta float64) {
 			c := p[i].Cells[j]
 			c.move(delta)
 			//TODO Check bounds after move
+
 			c.eat(&g.World.FoodTree)
 			c.eat(&g.World.CellTree)
 		}
@@ -217,6 +218,14 @@ func (p *Player) getCenter() Position {
 	}
 
 	return centroid(pos)
+}
+
+func (p *Player) getMass() float64 {
+	mass := 0.0
+	for i := range p.Cells {
+		mass += p.Cells[i].getEntity().Radius
+	}
+	return mass
 }
 
 //Return normalized vector from cell center to mouse position
@@ -324,8 +333,19 @@ func (w *World) updatePlayers(id string) {
 			fmt.Println("error while marhsalling results: " + err.Error())
 		}
 
+		gameData, err := json.Marshal(api.GameStats{
+			PlayerId:   fmt.Sprintf("%d", p.Id),
+			Mass:       p.getMass(),
+			FoodEaten:  p.foodEaten,
+			CellsEaten: 0,
+			Rank:       1,
+		})
+		if err != nil {
+			fmt.Println("error while marhsalling results: " + err.Error())
+		}
+
 		if p.conn != nil {
-			p.conn.Emit("update", string(posData), string(data))
+			p.conn.Emit("update", string(posData), string(data), string(gameData))
 		}
 	}
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"hexhibit.xyz/agor/api"
+	"github.com/gambler13/agor/api"
 	"log"
 	"net/http"
 	"os"
