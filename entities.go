@@ -11,7 +11,7 @@ type Entity struct {
 	Circle
 	Id     int
 	Killer int
-	Color  color.Color
+	color  color.Color
 }
 
 func (e *Entity) getEntity() *Entity {
@@ -41,7 +41,7 @@ func (w *World) NewCell(owner *Player) Cell {
 			},
 			Id:     rand.Int(),
 			Killer: 0,
-			Color:  colornames.Beige,
+			color:  colornames.Beige,
 		},
 		Owner: owner,
 	}
@@ -104,7 +104,7 @@ func (c *Cell) split() *Cell {
 			},
 			Id:     rand.Int(),
 			Killer: 0,
-			Color:  c.Color,
+			color:  c.color,
 		},
 		Owner: c.Owner,
 	}

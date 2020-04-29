@@ -1,6 +1,8 @@
 package main
 
-import "math"
+import (
+	"math"
+)
 
 // Quadtree - The quadtree data structure
 type Quadtree struct {
@@ -140,41 +142,32 @@ func (qt *Quadtree) split() {
 
 }
 
-// getIndex - Determine which quadrant the object belongs to (0-3)
-func (qt *Quadtree) getIndex(pRect Bounds) int {
+type NodeIndex int
 
-	index := -1 // index of the subnode (0-3), or -1 if pRect cannot completely fit within a subnode and is part of the parent node
+const NONE NodeIndex = -1
+const NE NodeIndex = 0
+const NW NodeIndex = 1
+const SW NodeIndex = 2
+const SE NodeIndex = 3
 
-	verticalMidpoint := qt.Bounds.X + (qt.Bounds.Width / 2)
-	horizontalMidpoint := qt.Bounds.Y + (qt.Bounds.Height / 2)
+func (qt *Quadtree) getIndex(p Position) NodeIndex {
 
-	//pRect can completely fit within the top quadrants
-	topQuadrant := (pRect.Y < horizontalMidpoint) && (pRect.Y+pRect.Height < horizontalMidpoint)
+	nX := qt.Bounds.X + (qt.Bounds.Width / 2)
+	nY := qt.Bounds.Y + (qt.Bounds.Height / 2)
 
-	//pRect can completely fit within the bottom quadrants
-	bottomQuadrant := (pRect.Y > horizontalMidpoint)
-
-	//pRect can completely fit within the left quadrants
-	if (pRect.X < verticalMidpoint) && (pRect.X+pRect.Width < verticalMidpoint) {
-
-		if topQuadrant {
-			index = 1
-		} else if bottomQuadrant {
-			index = 2
-		}
-
-	} else if pRect.X > verticalMidpoint {
-		//pRect can completely fit within the right quadrants
-
-		if topQuadrant {
-			index = 0
-		} else if bottomQuadrant {
-			index = 3
-		}
-
+	if p.X < nX && p.Y < nY {
+		return SW
+	} else if p.X < nX && p.Y > nY {
+		return NW
+	} else if p.X > nX && p.Y < nY {
+		return SE
+	} else if p.X > nX && p.X > nY {
+		return NE
+	} else if p.X == nX && p.Y == nY {
+		return NONE
 	}
 
-	return index
+	return NONE
 
 }
 
@@ -185,14 +178,14 @@ func (qt *Quadtree) Insert(entity EntityImpl) {
 	qt.Total++
 
 	i := 0
-	var index int
+	var index NodeIndex
 
 	// If we have subnodes within the Quadtree
 	if len(qt.Nodes) > 0 == true {
 
-		index = qt.getIndex(entity.getEntity().Bounds())
+		index = qt.getIndex(entity.getEntity().Position)
 
-		if index != -1 {
+		if index != NONE {
 			qt.Nodes[index].Insert(entity)
 			return
 		}
@@ -212,9 +205,9 @@ func (qt *Quadtree) Insert(entity EntityImpl) {
 		// Add all objects to there corresponding subNodes
 		for i < len(qt.Objects) {
 
-			index = qt.getIndex(qt.Objects[i].getEntity().Bounds())
+			index = qt.getIndex(qt.Objects[i].getEntity().Position)
 
-			if index != -1 {
+			if index != NONE {
 
 				splice := qt.Objects[i]                                  // Get the object out of the slice
 				qt.Objects = append(qt.Objects[:i], qt.Objects[i+1:]...) // Remove the object from the slice
@@ -236,7 +229,14 @@ func (qt *Quadtree) Insert(entity EntityImpl) {
 // Retrieve - Return all objects that could collide with the given object
 func (qt *Quadtree) Retrieve(rect Bounds) []EntityImpl {
 
-	index := qt.getIndex(rect)
+	rX := rect.X + (rect.Width / 2)
+	rY := rect.Y + (rect.Height / 2)
+	p := Position{
+		X: rX,
+		Y: rY,
+	}
+
+	index := qt.getIndex(p)
 
 	// Array with all detected objects
 	returnObjects := qt.Objects
@@ -248,7 +248,6 @@ func (qt *Quadtree) Retrieve(rect Bounds) []EntityImpl {
 		if index != -1 {
 
 			returnObjects = append(returnObjects, qt.Nodes[index].Retrieve(rect)...)
-
 		} else {
 
 			//if pRect does not fit into a subnode, check it against all subnodes

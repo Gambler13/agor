@@ -92,7 +92,7 @@ func main() {
 
 			for _, e := range ents {
 				entity := e.getEntity()
-				ctx.SetColor(entity.Color)
+				ctx.SetColor(entity.color)
 
 				pos := entity.Position
 

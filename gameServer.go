@@ -7,7 +7,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
 	"image/color"
-	"math"
+	"io/ioutil"
 	"math/rand"
 	"time"
 )
@@ -58,12 +58,17 @@ func InitWorld(b Bounds) World {
 				//Position: Position{X: float64(10.0 * i), Y: float64(10.0 * i)},
 			},
 			Killer: 0,
-			Color:  colName,
+			color:  colName,
 		}}
 
 		food = append(food, f)
 		i++
 	}
+
+	//foodData, _ := json.Marshal(food)
+	//ioutil.WriteFile("./food.json", foodData, 0600)
+	foodData, _ := ioutil.ReadFile("./food.json")
+	json.Unmarshal(foodData, food)
 
 	ct := Quadtree{
 		Bounds:     b,
@@ -250,6 +255,7 @@ func (w *World) getLeaderboard() {
 }
 
 var nO = make(map[string]int)
+var prevPos = make(map[string]Position)
 
 func (w *World) updatePlayers(id string) {
 	for _, p := range w.Players {
@@ -272,11 +278,12 @@ func (w *World) updatePlayers(id string) {
 		ents = append(ents, ents2...)
 
 		v, ok := nO[id]
-		if ok && math.Abs(float64(v-len(ents))) > 5 {
-			fmt.Printf("--- %d\n", len(ents))
+		if ok && v-len(ents) > 5 {
+			fmt.Printf("--- Diff: %d\nCurrent: %v\nPrevious: %v\n", len(ents)-v, pos, prevPos[id])
 		}
 
 		nO[id] = len(ents)
+		prevPos[id] = pos
 
 		results := make([]api.Entity, len(ents))
 
@@ -287,7 +294,7 @@ func (w *World) updatePlayers(id string) {
 				X:      e.X,
 				Y:      e.Y,
 				Radius: e.Radius,
-				Color:  hexColor(e.Color),
+				Color:  hexColor(e.color),
 			}
 		}
 
@@ -315,5 +322,6 @@ func (w *World) updatePlayers(id string) {
 		if p.conn != nil {
 			p.conn.Emit("update", string(posData), string(data), string(gameData))
 		}
+
 	}
 }
