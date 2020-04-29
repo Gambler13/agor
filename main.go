@@ -1,18 +1,24 @@
 package main
 
-import socketio "github.com/googollee/go-socket.io"
+import (
+	socketio "github.com/googollee/go-socket.io"
+	"image"
+)
 
 var canvasWidth = 640.0
 var canvasHeight = 400.0
 
 func main() {
 
-	w := InitWorld(Bounds{
-		X:      0,
-		Y:      0,
-		Width:  1200,
-		Height: 900,
-	})
+	bounds := image.Rectangle{
+		Min: image.Point{},
+		Max: image.Point{
+			X: 1200,
+			Y: 800,
+		},
+	}
+
+	w := InitWorld(bounds)
 	gl := GameLoop{
 		tickRate:       50,
 		quit:           nil,

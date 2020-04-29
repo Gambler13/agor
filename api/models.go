@@ -1,8 +1,8 @@
 package api
 
 type Entity struct {
-	X      float64
-	Y      float64
+	X      int
+	Y      int
 	Radius float64
 	Color  string
 }

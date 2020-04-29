@@ -2,6 +2,7 @@ package main
 
 import (
 	"golang.org/x/image/colornames"
+	"image"
 	"image/color"
 	"math"
 	"math/rand"
@@ -18,12 +19,21 @@ func (e *Entity) getEntity() *Entity {
 	return e
 }
 
-func (e Entity) Bounds() Bounds {
-	return Bounds{
-		X:      e.Position.X - e.Radius,
-		Y:      e.Position.Y - e.Radius,
-		Width:  e.Radius * 2,
-		Height: e.Radius * 2,
+func (e Entity) Bounds() image.Rectangle {
+
+	xMin := float64(e.X) - e.Radius
+	yMin := float64(e.Y) - e.Radius
+	xMax := float64(e.X) + e.Radius
+	yMax := float64(e.Y) + e.Radius
+	return image.Rectangle{
+		Min: image.Point{
+			X: int(xMin),
+			Y: int(yMin),
+		},
+		Max: image.Point{
+			X: int(xMax),
+			Y: int(yMax),
+		},
 	}
 }
 
@@ -53,26 +63,24 @@ func (c *Cell) onConsume(entity *Entity) {
 
 func (c *Cell) move(delta float64) {
 
-	movement := 1.0 / c.Radius * delta * 350
+	movement := 1.0 / c.Radius * delta * 3500
 	mP := c.Owner.Mouse
 
 	vec := math.Sqrt(q(mP.X) + q(mP.Y))
 
 	if vec != 0.0 {
-		x := movement * (mP.X / vec)
-		y := movement * (mP.Y / vec)
-		c.Position.X += x
-		c.Position.Y += y
+		x := movement * (float64(mP.X) / vec)
+		y := movement * (float64(mP.Y) / vec)
+		c.Position.X += int(x)
+		c.Position.Y += int(y)
 	}
 
 }
 
-func (c *Cell) eat(qt *Quadtree) {
-	intersections := qt.RetrieveIntersections(c)
+func (c *Cell) eat(qt *QuadTree) {
+	intersections := qt.query(c.Bounds())
 	for i := range intersections {
 		e := intersections[i]
-		entImpl := e.getEntity()
-
 		//Check if cell eat itself
 		interC, ok := e.(*Cell)
 		if ok {
@@ -80,6 +88,7 @@ func (c *Cell) eat(qt *Quadtree) {
 				continue
 			}
 		}
+		entImpl := e.getEntity()
 
 		if entImpl.Radius < c.Radius && entImpl.Killer == 0 {
 			c.Owner.distributeFood(e)
@@ -89,6 +98,22 @@ func (c *Cell) eat(qt *Quadtree) {
 	}
 }
 
+func (c *Cell) rectangle() image.Rectangle {
+	xMin := float64(c.X) - c.Radius
+	yMin := float64(c.Y) - c.Radius
+	xMax := float64(c.X) + c.Radius
+	yMax := float64(c.Y) + c.Radius
+	return image.Rectangle{
+		Min: image.Point{
+			X: int(xMin),
+			Y: int(yMin),
+		},
+		Max: image.Point{
+			X: int(xMax),
+			Y: int(yMax),
+		},
+	}
+}
 func (c *Cell) split() *Cell {
 	newRad := c.Radius / 2
 	c.Radius = newRad
@@ -120,7 +145,7 @@ func (f *Food) onConsume(entity *Entity) {
 	f.Killer = entity.Id
 }
 
-func (f *Food) onUpdate(qt *Quadtree, delta float64) {
+func (f *Food) onUpdate(qt *QuadTree, delta float64) {
 }
 
 type Virus struct {

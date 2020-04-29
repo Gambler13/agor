@@ -2,12 +2,17 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
-	"math"
 	"math/rand"
 )
 
 type Position struct {
+	X int
+	Y int
+}
+
+type Position64 struct {
 	X float64
 	Y float64
 }
@@ -23,28 +28,15 @@ type Rectangle struct {
 	Height float64
 }
 
-func getDistance(a, b Position) float64 {
-	return math.Sqrt(q(b.X-a.X) * q(b.Y-a.Y))
-}
-
-func sub(a, b Position) Position {
-	return Position{
-		X: a.X - b.X,
-		Y: a.Y - b.Y,
-	}
-}
-
 func q(a float64) float64 {
 	return a * a
 }
 
-func getRandomPosition(bounds Bounds, padding float64) Position {
-	maxX := int(bounds.Width - padding)
-	minX := int(padding)
-	maxY := int(bounds.Height - padding)
-	minY := int(padding)
-	x := float64(rand.Intn(maxX-minX+1) + minX)
-	y := float64(rand.Intn(maxY-minY+1) + minY)
+func getRandomPosition(r image.Rectangle, padding float64) Position {
+	max := r.Max
+	min := r.Min
+	x := rand.Intn(max.X-min.X+1) + min.X
+	y := rand.Intn(max.Y-min.Y+1) + min.Y
 
 	return Position{
 		X: x,
@@ -52,7 +44,8 @@ func getRandomPosition(bounds Bounds, padding float64) Position {
 	}
 }
 
-func intersects(c Circle, r Rectangle) bool {
+/*
+func intersects(c Circle, r image.Rectangle) bool {
 
 	cDistanceX := math.Abs(c.X - r.X)
 	cDistanceY := math.Abs(c.Y - r.Y)
@@ -77,27 +70,7 @@ func intersects(c Circle, r Rectangle) bool {
 
 	return cornerDistanceSq <= q(c.Radius)
 }
-
-func intersectsPoint(p Position, r Bounds) bool {
-	if p.X < r.X {
-		return false
-	}
-
-	if p.X > r.X+r.Width {
-		return false
-	}
-
-	if p.Y < r.Y {
-		return false
-	}
-
-	if p.Y > r.Y+r.Width {
-		return false
-	}
-
-	return true
-
-}
+*/
 
 func centroid(points []Position) Position {
 	if len(points) == 1 {
@@ -111,7 +84,7 @@ func centroid(points []Position) Position {
 		center.Y += points[i].Y
 	}
 
-	var totalPoints = float64(len(points))
+	var totalPoints = len(points)
 	center.X = center.X / totalPoints
 	center.Y = center.Y / totalPoints
 

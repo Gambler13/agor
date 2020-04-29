@@ -6,6 +6,7 @@ import (
 	"github.com/gambler13/agor/api"
 	socketio "github.com/googollee/go-socket.io"
 	"golang.org/x/image/colornames"
+	"image"
 	"image/color"
 	"io/ioutil"
 	"math/rand"
@@ -22,19 +23,20 @@ type GameLoop struct {
 }
 
 type PositionMsg struct {
-	Position
+	X        float64
+	Y        float64
 	PlayerID string
 }
 
 type World struct {
 	Players  map[string]*Player
-	CellTree Quadtree
+	CellTree QuadTree
 	Food     []EntityImpl
-	FoodTree Quadtree
-	Bounds   Bounds
+	FoodTree QuadTree
+	Bounds   image.Rectangle
 }
 
-func InitWorld(b Bounds) World {
+func InitWorld(b image.Rectangle) World {
 
 	var food []EntityImpl
 
@@ -70,20 +72,12 @@ func InitWorld(b Bounds) World {
 	foodData, _ := ioutil.ReadFile("./food.json")
 	json.Unmarshal(foodData, food)
 
-	ct := Quadtree{
-		Bounds:     b,
-		MaxObjects: 20,
-		MaxLevels:  10,
-	}
+	ct := QuadTree{}
 
-	ft := Quadtree{
-		Bounds:     b,
-		MaxObjects: 20,
-		MaxLevels:  10,
-	}
+	ft := QuadTree{}
 
 	for i := range food {
-		ft.Insert(food[i])
+		ft.insert(food[i])
 	}
 
 	player := make(map[string]*Player)
@@ -113,7 +107,7 @@ func (g *GameLoop) run() {
 			timeStart = now
 			g.onUpdate(delta)
 		case p := <-g.PositionCh:
-			g.World.handlePosition(p.PlayerID, p.Position)
+			g.World.handlePosition(p.PlayerID, p.X, p.Y)
 		case c := <-g.AddPlayerCh:
 			g.World.addNewPlayer(c)
 		case i := <-g.RemovePlayerCh:
@@ -125,6 +119,7 @@ func (g *GameLoop) run() {
 }
 
 func (g *GameLoop) onUpdate(delta float64) {
+	st := time.Now()
 	p := g.World.Players
 
 	//Update cells
@@ -132,28 +127,30 @@ func (g *GameLoop) onUpdate(delta float64) {
 		g.updateCells(delta, p[i])
 	}
 
-	g.World.CellTree.Clear()
+	g.World.CellTree.clear()
 	for i := range p {
 		for j := range p[i].Cells {
 			if p[i].Cells[j].getEntity().Killer == 0 {
-				g.World.CellTree.Insert(p[i].Cells[j])
+				g.World.CellTree.insert(p[i].Cells[j])
 			}
 		}
 	}
 
 	//Update food
-	g.World.FoodTree.Clear()
+	g.World.FoodTree.clear()
 	for i := range g.World.Food {
 		f := g.World.Food[i]
 		if f.getEntity().Killer == 0 {
-			g.World.FoodTree.Insert(f)
+			g.World.FoodTree.insert(f)
 		}
 	}
 
 	for i := range p {
+		fmt.Printf("Pos P%d %d/%d\n", i, p[i].getCenter().X, p[i].getCenter().X)
 		g.World.updatePlayers(p[i].SocketId)
 	}
 
+	fmt.Printf("updated in %dms\n", time.Now().Sub(st).Milliseconds())
 }
 
 func (g *GameLoop) updateCells(delta float64, p *Player) {
@@ -163,7 +160,13 @@ func (g *GameLoop) updateCells(delta float64, p *Player) {
 		c.eat(&g.World.FoodTree)
 		c.eat(&g.World.CellTree)
 	}
-	if !intersectsPoint(p.getCenter(), g.World.Bounds) {
+	pos := p.getCenter()
+	point := image.Point{
+		X: pos.X,
+		Y: pos.Y,
+	}
+
+	if !point.In(g.World.Bounds) {
 		for j := range p.Cells {
 			c := p.Cells[j]
 			//Undo cell move
@@ -176,7 +179,7 @@ type Player struct {
 	Id       int
 	SocketId string
 	//Normalized vector based on players center
-	Mouse     Position
+	Mouse     Position64
 	Cells     []*Cell
 	conn      socketio.Conn
 	startTS   time.Time
@@ -198,11 +201,6 @@ func (p *Player) getMass() float64 {
 		mass += p.Cells[i].getEntity().Radius
 	}
 	return mass
-}
-
-//Return normalized vector from cell center to mouse position
-func (p *Player) getMouseVector() Position {
-	return sub(p.Mouse, p.getCenter())
 }
 
 //Distribute eaten food between players cell
@@ -230,7 +228,7 @@ func (w *World) addNewPlayer(conn socketio.Conn) {
 	player := &Player{
 		Id:       rand.Int(),
 		SocketId: conn.ID(),
-		Mouse:    Position{},
+		Mouse:    Position64{},
 		conn:     conn,
 		startTS:  time.Now(),
 	}
@@ -245,9 +243,12 @@ func (w *World) removePlayer(socketId string) {
 	delete(w.Players, socketId)
 }
 
-func (w *World) handlePosition(id string, mousePos Position) {
+func (w *World) handlePosition(id string, x, y float64) {
 	p := w.Players[id]
-	p.Mouse = mousePos
+	p.Mouse = Position64{
+		X: x,
+		Y: y,
+	}
 }
 
 func (w *World) handleSplit(id string) {
@@ -271,18 +272,20 @@ func (w *World) updatePlayers(id string) {
 
 		pos := p.getCenter()
 
-		ents := w.CellTree.RetrieveViewIntersections(Bounds{
-			X:      pos.X,
-			Y:      pos.Y,
-			Width:  300,
-			Height: 300,
-		})
-		ents2 := w.FoodTree.RetrieveViewIntersections(Bounds{
-			X:      pos.X,
-			Y:      pos.Y,
-			Width:  300,
-			Height: 300,
-		})
+		view := image.Rectangle{
+			Min: image.Point{
+				X: pos.X - 150,
+				Y: pos.Y - 150,
+			},
+			Max: image.Point{
+				X: pos.X + 150,
+				Y: pos.Y + 150,
+			},
+		}
+
+		ents := w.CellTree.query(view)
+
+		ents2 := w.FoodTree.query(view)
 
 		ents = append(ents, ents2...)
 

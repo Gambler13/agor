@@ -26,10 +26,10 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 		var pos api.Mouse
 		json.Unmarshal([]byte(msg), &pos)
 
-		pmsg := PositionMsg{PlayerID: s.ID(), Position: Position{
+		pmsg := PositionMsg{PlayerID: s.ID(),
 			X: pos.X,
 			Y: pos.Y,
-		}}
+		}
 
 		position <- pmsg
 
