@@ -78,6 +78,27 @@ func intersects(c Circle, r Rectangle) bool {
 	return cornerDistanceSq <= q(c.Radius)
 }
 
+func intersectsPoint(p Position, r Bounds) bool {
+	if p.X < r.X {
+		return false
+	}
+
+	if p.X > r.X+r.Width {
+		return false
+	}
+
+	if p.Y < r.Y {
+		return false
+	}
+
+	if p.Y > r.Y+r.Width {
+		return false
+	}
+
+	return true
+
+}
+
 func centroid(points []Position) Position {
 	if len(points) == 1 {
 		return points[0]

@@ -129,14 +129,7 @@ func (g *GameLoop) onUpdate(delta float64) {
 
 	//Update cells
 	for i := range p {
-		for j := range p[i].Cells {
-			c := p[i].Cells[j]
-			c.move(delta)
-			//TODO Check bounds after move
-
-			c.eat(&g.World.FoodTree)
-			c.eat(&g.World.CellTree)
-		}
+		g.updateCells(delta, p[i])
 	}
 
 	g.World.CellTree.Clear()
@@ -161,6 +154,22 @@ func (g *GameLoop) onUpdate(delta float64) {
 		g.World.updatePlayers(p[i].SocketId)
 	}
 
+}
+
+func (g *GameLoop) updateCells(delta float64, p *Player) {
+	for j := range p.Cells {
+		c := p.Cells[j]
+		c.move(delta)
+		c.eat(&g.World.FoodTree)
+		c.eat(&g.World.CellTree)
+	}
+	if !intersectsPoint(p.getCenter(), g.World.Bounds) {
+		for j := range p.Cells {
+			c := p.Cells[j]
+			//Undo cell move
+			c.move((-1) * delta)
+		}
+	}
 }
 
 type Player struct {
