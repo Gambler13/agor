@@ -1,0 +1,17 @@
+#customized base image
+image: docker:17
+services:
+  - docker:dind
+
+
+build-go:
+  stage: build
+  image: docker:17
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t registry.gitlab.com/hexhibit/agor:prebuild .
+    - TAG_REF=$(if [ "${CI_COMMIT_TAG}" == "" ]; then echo "${CI_COMMIT_SHA:0:8}"; else echo "${CI_COMMIT_TAG}"; fi);
+    - docker tag registry.gitlab.com/hexhibit/agor:prebuild registry.gitlab.com/hexhibit/agor:$TAG_REF
+    - docker push registry.gitlab.com/hexhibit/agor:$TAG_REF
+  only:
+    - tags
