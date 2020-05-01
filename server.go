@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gambler13/agor/api"
 	"log"
 	"net/http"
@@ -12,12 +11,14 @@ import (
 )
 
 func startServer(addPlayer chan socketio.Conn, removePlayer chan string, position chan PositionMsg) {
+	Log.Info("start server")
 	server, err := socketio.NewServer(nil)
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatalf("could no create socket.io server: %v", err)
 	}
+
 	server.OnConnect("/", func(s socketio.Conn) error {
-		fmt.Println("connected:", s.ID())
+		Log.Debugf("new connection:", s.ID())
 		addPlayer <- s
 		return nil
 	})
@@ -51,10 +52,10 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 		return last
 	})
 	server.OnError("/", func(s socketio.Conn, e error) {
-		fmt.Println("meet error:", e)
+		Log.Warnf("socket.io error: %v", e)
 	})
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
-		fmt.Println("closed", reason)
+		Log.Infof("socket closed connection, ID: %s, reason: %s", s.ID(), reason)
 		removePlayer <- s.ID()
 		s.Close()
 	})
@@ -62,8 +63,8 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 	defer server.Close()
 
 	http.Handle("/socket/", corsMiddleware(server))
-	http.Handle("/", http.FileServer(http.Dir("./asset")))
-	log.Println("Serving at localhost:8008...")
+	http.Handle("/", http.FileServer(http.Dir("./assets")))
+	Log.Info("listen and serve on :8008")
 	log.Fatal(http.ListenAndServe(":8008", nil))
 }
 

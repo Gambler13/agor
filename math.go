@@ -44,34 +44,6 @@ func getRandomPosition(r image.Rectangle, padding float64) Position {
 	}
 }
 
-/*
-func intersects(c Circle, r image.Rectangle) bool {
-
-	cDistanceX := math.Abs(c.X - r.X)
-	cDistanceY := math.Abs(c.Y - r.Y)
-
-	if cDistanceX > (r.Width/2 + c.Radius) {
-		return false
-	}
-
-	if cDistanceY > (r.Height/2 + c.Radius) {
-		return false
-	}
-
-	if cDistanceX <= (r.Width / 2) {
-		return true
-	}
-
-	if cDistanceY <= (r.Height / 2) {
-		return true
-	}
-
-	cornerDistanceSq := q(cDistanceX-r.Width/2) + q(cDistanceY-r.Height/2)
-
-	return cornerDistanceSq <= q(c.Radius)
-}
-*/
-
 func centroid(points []Position) Position {
 	if len(points) == 1 {
 		return points[0]

@@ -93,6 +93,8 @@ func InitWorld(b image.Rectangle) World {
 }
 
 func (g *GameLoop) run() {
+	Log.Info("start game loop")
+
 	tickInterval := time.Second / g.tickRate
 	timeStart := time.Now().UnixNano()
 
@@ -119,7 +121,6 @@ func (g *GameLoop) run() {
 }
 
 func (g *GameLoop) onUpdate(delta float64) {
-	st := time.Now()
 	p := g.World.Players
 
 	//Update cells
@@ -146,11 +147,9 @@ func (g *GameLoop) onUpdate(delta float64) {
 	}
 
 	for i := range p {
-		fmt.Printf("Pos P%d %d/%d\n", i, p[i].getCenter().X, p[i].getCenter().X)
 		g.World.updatePlayers(p[i].SocketId)
 	}
 
-	fmt.Printf("updated in %dms\n", time.Now().Sub(st).Milliseconds())
 }
 
 func (g *GameLoop) updateCells(delta float64, p *Player) {
@@ -264,9 +263,6 @@ func (w *World) getLeaderboard() {
 
 }
 
-var nO = make(map[string]int)
-var prevPos = make(map[string]Position)
-
 func (w *World) updatePlayers(id string) {
 	for _, p := range w.Players {
 
@@ -289,14 +285,6 @@ func (w *World) updatePlayers(id string) {
 
 		ents = append(ents, ents2...)
 
-		v, ok := nO[id]
-		if ok && v-len(ents) > 5 {
-			fmt.Printf("--- Diff: %d\nCurrent: %v\nPrevious: %v\n", len(ents)-v, pos, prevPos[id])
-		}
-
-		nO[id] = len(ents)
-		prevPos[id] = pos
-
 		results := make([]api.Entity, len(ents))
 
 		for i := range ents {
@@ -310,13 +298,13 @@ func (w *World) updatePlayers(id string) {
 			}
 		}
 
-		data, err := json.Marshal(results)
+		entityData, err := json.Marshal(results)
 		if err != nil {
-			fmt.Println("error while marhsalling results: " + err.Error())
+			Log.Errorf("error while marshalling entity results: %v", err)
 		}
 		posData, err := json.Marshal(api.Entity{Y: pos.Y, X: pos.X})
 		if err != nil {
-			fmt.Println("error while marhsalling results: " + err.Error())
+			Log.Errorf("error while marshalling position results: %v", err)
 		}
 
 		gameData, err := json.Marshal(api.GameStats{
@@ -328,11 +316,11 @@ func (w *World) updatePlayers(id string) {
 			NumPlayers: len(w.Players),
 		})
 		if err != nil {
-			fmt.Println("error while marhsalling results: " + err.Error())
+			Log.Errorf("error while marshalling game data results: %v", err)
 		}
 
 		if p.conn != nil {
-			p.conn.Emit("update", string(posData), string(data), string(gameData))
+			p.conn.Emit("update", string(posData), string(entityData), string(gameData))
 		}
 
 	}
