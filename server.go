@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gambler13/agor/api"
 	"log"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"github.com/googollee/go-socket.io"
 )
 
-func startServer(addPlayer chan socketio.Conn, removePlayer chan string, position chan PositionMsg) {
+func startServer(addPlayer chan socketio.Conn, removePlayer chan string, position chan PositionMsg, port int) {
 	Log.Info("start server")
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -51,6 +52,7 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 		s.Close()
 		return last
 	})
+
 	server.OnError("/", func(s socketio.Conn, e error) {
 		Log.Warnf("socket.io error: %v", e)
 	})
@@ -64,8 +66,8 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 
 	http.Handle("/socket/", corsMiddleware(server))
 	http.Handle("/", http.FileServer(http.Dir("./assets")))
-	Log.Info("listen and serve on :8008")
-	log.Fatal(http.ListenAndServe(":8008", nil))
+	Log.Infof("listen and serve on :%d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

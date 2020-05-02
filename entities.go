@@ -63,16 +63,16 @@ func (c *Cell) onConsume(entity *Entity) {
 
 func (c *Cell) move(delta float64) {
 
-	movement := 1.0 / c.Radius * delta * 3500
+	movement := 1.0 / c.Radius * delta * 5000
 	mP := c.Owner.Mouse
 
 	vec := math.Sqrt(q(mP.X) + q(mP.Y))
 
 	if vec != 0.0 {
-		x := movement * (float64(mP.X) / vec)
-		y := movement * (float64(mP.Y) / vec)
-		c.Position.X += int(x)
-		c.Position.Y += int(y)
+		x := movement * (mP.X / vec)
+		y := movement * (mP.Y / vec)
+		c.Position.X += int(math.Round(x))
+		c.Position.Y += int(math.Round(y))
 	}
 
 }
@@ -81,10 +81,10 @@ func (c *Cell) eat(qt *QuadTree) {
 	intersections := qt.query(c.Bounds())
 	for i := range intersections {
 		e := intersections[i]
-		//Check if cell eat itself
-		interC, ok := e.(*Cell)
+		victim, ok := e.(*Cell)
 		if ok {
-			if interC.Owner.Id == c.Owner.Id {
+			//Check if cell eat itself
+			if victim.Owner.Id == c.Owner.Id {
 				continue
 			}
 		}

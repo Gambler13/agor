@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"github.com/gambler13/agor/api"
 	socketio "github.com/googollee/go-socket.io"
-	"golang.org/x/image/colornames"
 	"image"
-	"image/color"
-	"io/ioutil"
 	"math/rand"
 	"time"
 )
@@ -36,41 +33,36 @@ type World struct {
 	Bounds   image.Rectangle
 }
 
-func InitWorld(b image.Rectangle) World {
+func InitWorld(conf Config) World {
+
+	world := conf.World
+
+	bounds := image.Rectangle{
+		Min: image.Point{},
+		Max: image.Point{
+			X: world.Width,
+			Y: world.Height,
+		},
+	}
 
 	var food []EntityImpl
 
 	i := 0
-	for i < 500 {
-
-		var colName color.Color
-		if i < 100 {
-			colName = colornames.Bisque
-		} else if i < 200 {
-			colName = colornames.Aliceblue
-		} else {
-			colName = colornames.Greenyellow
-		}
+	for i < world.Food {
 
 		f := &Food{Entity{
 			Id: rand.Int(),
 			Circle: Circle{
 				Radius:   5,
-				Position: getRandomPosition(b, 1),
-				//Position: Position{X: float64(10.0 * i), Y: float64(10.0 * i)},
+				Position: getRandomPosition(bounds, 1),
 			},
 			Killer: 0,
-			color:  colName,
+			color:  randomColor(),
 		}}
 
 		food = append(food, f)
 		i++
 	}
-
-	//foodData, _ := json.Marshal(food)
-	//ioutil.WriteFile("./food.json", foodData, 0600)
-	foodData, _ := ioutil.ReadFile("./food.json")
-	json.Unmarshal(foodData, food)
 
 	ct := QuadTree{}
 
@@ -87,7 +79,7 @@ func InitWorld(b image.Rectangle) World {
 		CellTree: ct,
 		Food:     food,
 		FoodTree: ft,
-		Bounds:   b,
+		Bounds:   bounds,
 	}
 
 }

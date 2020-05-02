@@ -67,3 +67,15 @@ func hexColor(c color.Color) string {
 	rgba := color.RGBAModel.Convert(c).(color.RGBA)
 	return fmt.Sprintf("#%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 }
+
+func randomColor() color.Color {
+	r := uint8(rand.Intn(255))
+	g := uint8(rand.Intn(255))
+	b := uint8(rand.Intn(255))
+	return color.RGBA{
+		R: r,
+		G: g,
+		B: b,
+		A: 1,
+	}
+}

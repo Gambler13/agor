@@ -3,7 +3,6 @@ package main
 import (
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/sirupsen/logrus"
-	"image"
 )
 
 var Log *logrus.Logger
@@ -13,17 +12,20 @@ var canvasHeight = 400.0
 
 func main() {
 
-	Log = logrus.New()
-
-	bounds := image.Rectangle{
-		Min: image.Point{},
-		Max: image.Point{
-			X: 1200,
-			Y: 800,
+	conf := Config{
+		Port:           8008,
+		AllowedOrigins: []string{},
+		World: WorldConfig{
+			Width:     1200,
+			Height:    800,
+			MaxPlayer: 100,
+			Food:      500,
 		},
 	}
 
-	w := InitWorld(bounds)
+	Log = logrus.New()
+
+	w := InitWorld(conf)
 	gl := GameLoop{
 		tickRate:       50,
 		quit:           nil,
@@ -35,6 +37,6 @@ func main() {
 
 	go gl.run()
 
-	startServer(gl.AddPlayerCh, gl.RemovePlayerCh, gl.PositionCh)
+	startServer(gl.AddPlayerCh, gl.RemovePlayerCh, gl.PositionCh, conf.Port)
 
 }
