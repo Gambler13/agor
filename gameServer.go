@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gambler13/agor/api"
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/googollee/go-socket.io/parser"
 	"image"
 	"math/rand"
 	"time"
@@ -57,7 +58,7 @@ func InitWorld(conf Config) World {
 				Position: getRandomPosition(bounds, 1),
 			},
 			Killer: 0,
-			color:  randomColor(),
+			color:  randomLutIndex(),
 		}}
 
 		food = append(food, f)
@@ -153,8 +154,8 @@ func (g *GameLoop) updateCells(delta float64, p *Player) {
 	}
 	pos := p.getCenter()
 	point := image.Point{
-		X: pos.X,
-		Y: pos.Y,
+		X: int(pos.X),
+		Y: int(pos.Y),
 	}
 
 	if !point.In(g.World.Bounds) {
@@ -235,7 +236,10 @@ func (w *World) removePlayer(socketId string) {
 }
 
 func (w *World) handlePosition(id string, x, y float64) {
-	p := w.Players[id]
+	p, ok := w.Players[id]
+	if !ok {
+		return
+	}
 	p.Mouse = Position64{
 		X: x,
 		Y: y,
@@ -262,41 +266,35 @@ func (w *World) updatePlayers(id string) {
 
 		view := image.Rectangle{
 			Min: image.Point{
-				X: pos.X - 150,
-				Y: pos.Y - 150,
+				X: int(pos.X - 150),
+				Y: int(pos.Y - 150),
 			},
 			Max: image.Point{
-				X: pos.X + 150,
-				Y: pos.Y + 150,
+				X: int(pos.X + 150),
+				Y: int(pos.Y + 150),
 			},
 		}
 
-		ents := w.CellTree.query(view)
+		cells := w.CellTree.query(view)
 
-		ents2 := w.FoodTree.query(view)
+		food := w.FoodTree.query(view)
 
-		ents = append(ents, ents2...)
+		entities := append(cells, food...)
 
-		results := make([]api.Entity, len(ents))
+		entityData := make([]byte, len(entities)*entities[0].getByteSize())
 
-		for i := range ents {
-			entityImpl := ents[i]
+		for i := range entities {
+			entityImpl := entities[i]
 			e := entityImpl.getEntity()
-			results[i] = api.Entity{
-				X:      e.X,
-				Y:      e.Y,
-				Radius: e.Radius,
-				Color:  hexColor(e.color),
+			for j := range e.getByte() {
+				entityData[i*e.getByteSize()+j] = e.getByte()[j]
 			}
+
 		}
 
-		entityData, err := json.Marshal(results)
+		posData, err := json.Marshal(api.Entity{Y: int(pos.Y), X: int(pos.X)})
 		if err != nil {
-			Log.Errorf("error while marshalling entity results: %v", err)
-		}
-		posData, err := json.Marshal(api.Entity{Y: pos.Y, X: pos.X})
-		if err != nil {
-			Log.Errorf("error while marshalling position results: %v", err)
+			Log.Errorf("error while marshalling position entityData: %v", err)
 		}
 
 		gameData, err := json.Marshal(api.GameStats{
@@ -308,11 +306,14 @@ func (w *World) updatePlayers(id string) {
 			NumPlayers: len(w.Players),
 		})
 		if err != nil {
-			Log.Errorf("error while marshalling game data results: %v", err)
+			Log.Errorf("error while marshalling game data entityData: %v", err)
 		}
 
+		var socketBuf parser.Buffer
+		socketBuf.Data = entityData
+
 		if p.conn != nil {
-			p.conn.Emit("update", string(posData), string(entityData), string(gameData))
+			p.conn.Emit("update", string(posData), &socketBuf, string(gameData))
 		}
 
 	}

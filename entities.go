@@ -1,9 +1,9 @@
 package main
 
 import (
-	"golang.org/x/image/colornames"
+	"bytes"
+	"encoding/binary"
 	"image"
-	"image/color"
 	"math"
 	"math/rand"
 )
@@ -12,7 +12,7 @@ type Entity struct {
 	Circle
 	Id     int
 	Killer int
-	color  color.Color
+	color  byte //Real value doesn't matter
 }
 
 func (e *Entity) getEntity() *Entity {
@@ -51,7 +51,7 @@ func (w *World) NewCell(owner *Player) Cell {
 			},
 			Id:     rand.Int(),
 			Killer: 0,
-			color:  colornames.Beige,
+			color:  randomLutIndex(),
 		},
 		Owner: owner,
 	}
@@ -75,6 +75,27 @@ func (c *Cell) move(delta float64) {
 		c.Position.Y += int(math.Round(y))
 	}
 
+}
+
+//32b X
+//32b Y
+//64b Radius
+//8b  Color
+//----
+//17 byte
+func (e *Entity) getByteSize() int {
+	return 17
+}
+
+func (e *Entity) getByte() []byte {
+	buf := bytes.NewBuffer(make([]byte, 0, e.getByteSize()))
+
+	binary.Write(buf, binary.BigEndian, uint32(e.X))
+	binary.Write(buf, binary.BigEndian, uint32(e.Y))
+	binary.Write(buf, binary.BigEndian, e.Radius)
+	binary.Write(buf, binary.BigEndian, e.color)
+
+	return buf.Bytes()
 }
 
 func (c *Cell) eat(qt *QuadTree) {
@@ -159,4 +180,6 @@ func (v *Virus) onConsume(entity *Entity) {
 type EntityImpl interface {
 	onConsume(entity *Entity)
 	getEntity() *Entity
+	getByteSize() int
+	getByte() []byte
 }

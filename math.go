@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"image"
 	"image/color"
 	"math/rand"
+	"strings"
 )
 
 type Position struct {
@@ -63,11 +65,32 @@ func centroid(points []Position) Position {
 	return center
 }
 
-func hexColor(c color.Color) string {
+var LUT = map[byte]string{
+	0: "#ff99f0",
+	1: "#37c9f4",
+	2: "#f6e327",
+	3: "#ad3bee",
+	4: "#f22727",
+}
+
+func toHexColor(c color.Color) string {
 	rgba := color.RGBAModel.Convert(c).(color.RGBA)
 	return fmt.Sprintf("#%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 }
 
+func fromHexColor(s string) color.RGBA {
+	s = strings.ReplaceAll(s, "#", "")
+	b, _ := hex.DecodeString(s)
+	return color.RGBA{b[0], b[1], b[2], b[3]}
+}
+
+func randomLutIndex() byte {
+	return byte(rand.Intn(len(LUT)))
+}
+func randomLutColor() color.RGBA {
+	n := rand.Intn(4)
+	return fromHexColor(LUT[byte(n)])
+}
 func randomColor() color.Color {
 	r := uint8(rand.Intn(255))
 	g := uint8(rand.Intn(255))
