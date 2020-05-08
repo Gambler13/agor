@@ -63,7 +63,7 @@ func (c *Cell) onConsume(entity *Entity) {
 
 func (c *Cell) move(delta float64) {
 
-	movement := 1.0 / c.Radius * delta * 5000
+	movement := 1.0 / c.Radius * delta * 1500
 	mP := c.Owner.Mouse
 
 	vec := math.Sqrt(q(mP.X) + q(mP.Y))

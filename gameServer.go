@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gambler13/agor/api"
+	"github.com/gambler13/agor/conf"
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/googollee/go-socket.io/parser"
 	"image"
@@ -34,7 +35,7 @@ type World struct {
 	Bounds   image.Rectangle
 }
 
-func InitWorld(conf Config) World {
+func InitWorld(conf conf.Game) World {
 
 	world := conf.World
 

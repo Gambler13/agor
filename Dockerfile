@@ -28,6 +28,7 @@ RUN apk --update add bash
 COPY --from=build-stage /agor/agor /etc/agor/
 COPY ./startup.sh /etc/agor/
 COPY ./assets/ /etc/agor/assets/
+COPY ./config.yaml /etc/agor/config/default.yaml
 
 RUN chmod +x /etc/agor/startup.sh
 

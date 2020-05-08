@@ -1,0 +1,8 @@
+---
+tickRate: 50        #Tick rate for game loop (1/tickRate)
+port: 8008          #Server port
+world:              #World settings
+  width: 1200   #World width
+  height: 800    #World height
+  maxPlayer: 100    #Max players
+  food: 500    #Max food (non regenerative)

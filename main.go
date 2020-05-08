@@ -1,29 +1,34 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gambler13/agor/conf"
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 var Log *logrus.Logger
+
+const AgorConfigEnv = "AGOR_CONFIG"
+const DefaultConfig = "/etc/agor/config/config.yaml"
 
 var canvasWidth = 640.0
 var canvasHeight = 400.0
 
 func main() {
+	Log = logrus.New()
 
-	conf := Config{
-		Port:           8008,
-		AllowedOrigins: []string{},
-		World: WorldConfig{
-			Width:     1200,
-			Height:    800,
-			MaxPlayer: 100,
-			Food:      500,
-		},
+	configFile := os.Getenv(AgorConfigEnv)
+	if configFile == "" {
+		Log.Warnf("no config file provided with %s env variable, use default config %s", AgorConfigEnv, DefaultConfig)
+		configFile = DefaultConfig
 	}
 
-	Log = logrus.New()
+	conf, err := conf.Load(configFile)
+	if err != nil {
+		panic(fmt.Errorf("could not load config file: %w", err))
+	}
 
 	w := InitWorld(conf)
 	gl := GameLoop{

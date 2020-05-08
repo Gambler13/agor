@@ -1,9 +1,10 @@
 package main
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/binary"
 	"fmt"
-	"github.com/gambler13/agor/api"
+	"github.com/googollee/go-socket.io/parser"
 	"log"
 	"net/http"
 	"os"
@@ -24,13 +25,22 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 		return nil
 	})
 
-	server.OnEvent("/", "position", func(s socketio.Conn, msg string) {
-		var pos api.Mouse
-		json.Unmarshal([]byte(msg), &pos)
+	server.OnEvent("/", "position", func(s socketio.Conn, msg parser.Buffer) {
+
+		a := struct {
+			X float32
+			Y float32
+		}{}
+
+		buf := bytes.NewReader(msg.Data)
+		err := binary.Read(buf, binary.LittleEndian, &a)
+		if err != nil {
+
+		}
 
 		pmsg := PositionMsg{PlayerID: s.ID(),
-			X: pos.X,
-			Y: pos.Y,
+			X: float64(a.X),
+			Y: float64(a.Y),
 		}
 
 		position <- pmsg
@@ -80,6 +90,11 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Headers", allowHeaders)
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})
