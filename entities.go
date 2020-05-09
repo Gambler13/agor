@@ -19,6 +19,11 @@ func (e *Entity) getEntity() *Entity {
 	return e
 }
 
+//Return Position castet to int
+func (e *Entity) PosInt() (x, y int) {
+	return int(e.X), int(e.Y)
+}
+
 func (e Entity) Bounds() image.Rectangle {
 
 	xMin := float64(e.X) - e.Radius
@@ -71,8 +76,8 @@ func (c *Cell) move(delta float64) {
 	if vec != 0.0 {
 		x := movement * (mP.X / vec)
 		y := movement * (mP.Y / vec)
-		c.Position.X += int(math.Round(x))
-		c.Position.Y += int(math.Round(y))
+		c.Position.X += x
+		c.Position.Y += y
 	}
 
 }

@@ -24,20 +24,21 @@ func (q *QuadTree) insert(e EntityImpl) {
 
 func insert(n *Node, e EntityImpl) *Node {
 	entity := e.getEntity()
+	eX, eY := entity.PosInt()
 	if n == nil {
 		return &Node{
-			X:      int(e.getEntity().X),
-			Y:      int(e.getEntity().Y),
+			X:      eX,
+			Y:      eY,
 			Nodes:  make(map[int]*Node),
 			Entity: e,
 		}
-	} else if entity.X < n.X && entity.Y < n.Y {
+	} else if eX < n.X && eY < n.Y {
 		n.Nodes[SW] = insert(n.Nodes[SW], e)
-	} else if entity.X < n.X && entity.Y > n.Y {
+	} else if eX < n.X && eY > n.Y {
 		n.Nodes[NW] = insert(n.Nodes[NW], e)
-	} else if entity.X > n.X && entity.Y < n.Y {
+	} else if eX > n.X && eY < n.Y {
 		n.Nodes[SE] = insert(n.Nodes[SE], e)
-	} else if entity.X > n.X && entity.Y > n.Y {
+	} else if eX > n.X && eY > n.Y {
 		n.Nodes[NE] = insert(n.Nodes[NE], e)
 	}
 	return n

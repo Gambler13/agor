@@ -10,8 +10,8 @@ import (
 )
 
 type Position struct {
-	X int
-	Y int
+	X float64
+	Y float64
 }
 
 type Position64 struct {
@@ -41,8 +41,8 @@ func getRandomPosition(r image.Rectangle, padding float64) Position {
 	y := rand.Intn(max.Y-min.Y+1) + min.Y
 
 	return Position{
-		X: x,
-		Y: y,
+		X: float64(x),
+		Y: float64(y),
 	}
 }
 
@@ -58,7 +58,7 @@ func centroid(points []Position) Position {
 		center.Y += points[i].Y
 	}
 
-	var totalPoints = len(points)
+	var totalPoints = float64(len(points))
 	center.X = center.X / totalPoints
 	center.Y = center.Y / totalPoints
 
