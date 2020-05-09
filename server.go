@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/gambler13/agor/api"
 	"github.com/googollee/go-socket.io/parser"
 	"log"
 	"net/http"
@@ -27,20 +28,17 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 
 	server.OnEvent("/", "position", func(s socketio.Conn, msg parser.Buffer) {
 
-		a := struct {
-			X float32
-			Y float32
-		}{}
+		var event api.MouseEvent
 
 		buf := bytes.NewReader(msg.Data)
-		err := binary.Read(buf, binary.LittleEndian, &a)
+		err := binary.Read(buf, binary.LittleEndian, &event)
 		if err != nil {
 
 		}
 
 		pmsg := PositionMsg{PlayerID: s.ID(),
-			X: float64(a.X),
-			Y: float64(a.Y),
+			X: float64(event.X),
+			Y: float64(event.Y),
 		}
 
 		position <- pmsg

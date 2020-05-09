@@ -20,3 +20,8 @@ type GameStats struct {
 	CellsEaten int
 	Rank       int
 }
+
+type MouseEvent struct {
+	X float32
+	Y float32
+}
