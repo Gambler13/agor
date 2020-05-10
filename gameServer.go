@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gambler13/agor/api"
@@ -178,6 +179,8 @@ type Player struct {
 	conn      socketio.Conn
 	startTS   time.Time
 	foodEaten int
+	updateCh  chan string
+	cancel    func()
 }
 
 func (p *Player) getCenter() Position {
@@ -217,24 +220,51 @@ func (p *Player) splitCells() {
 	p.Cells = newCells
 }
 
+func (p *Player) runUpdateLoop(ctx context.Context) {
+	for {
+		select {
+		case <-p.updateCh:
+
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (p *Player) stopUpdateLoop() {
+	p.cancel()
+}
+
 func (w *World) addNewPlayer(conn socketio.Conn) {
 	Log.Infof("add player with socket id: %s", conn.ID())
+
+	ctx, cancel := context.WithCancel(context.Background())
+
 	player := &Player{
 		Id:       rand.Int(),
 		SocketId: conn.ID(),
 		Mouse:    Position64{},
 		conn:     conn,
 		startTS:  time.Now(),
+		cancel:   cancel,
 	}
 	//TODO add cell method on player or somethinng like thaht
 	c := w.NewCell(player)
 	player.Cells = []*Cell{&c}
 
 	w.Players[conn.ID()] = player
+
+	player.runUpdateLoop(ctx)
 }
 
 func (w *World) removePlayer(socketId string) {
-	Log.Infof("remove player with socket id: %s", socketId)
+	Log.Infof("stopUpdateLoop player with socket id: %s", socketId)
+	p, ok := w.Players[socketId]
+	if !ok {
+		Log.Warnf("could not stopUpdateLoop player with id %s: not found", socketId)
+		return
+	}
+	p.stopUpdateLoop()
 	delete(w.Players, socketId)
 }
 
@@ -293,13 +323,18 @@ func (w *World) updatePlayers(id string) {
 			for j := range e.getByte() {
 				entityData[i*e.getByteSize()+j] = e.getByte()[j]
 			}
-
 		}
 
-		posData, err := json.Marshal(api.Entity{Y: int(pos.Y), X: int(pos.X)})
-		if err != nil {
-			Log.Errorf("error while marshalling position entityData: %v", err)
+		var socketBuf parser.Buffer
+		socketBuf.Data = entityData
+
+		apiPos := &api.Position{
+			X: uint32(pos.X),
+			Y: uint32(pos.Y),
 		}
+
+		var positionBuf parser.Buffer
+		positionBuf.Data = apiPos.GetBytes()
 
 		gameData, err := json.Marshal(api.GameStats{
 			PlayerID:   fmt.Sprintf("%d", p.Id),
@@ -311,14 +346,12 @@ func (w *World) updatePlayers(id string) {
 		})
 		if err != nil {
 			Log.Errorf("error while marshalling game data entityData: %v", err)
+			continue
 		}
-
-		var socketBuf parser.Buffer
-		socketBuf.Data = entityData
 
 		if p.conn != nil {
 			//TODO deadline / timeout?
-			go p.conn.Emit("update", string(posData), &socketBuf, string(gameData))
+			p.conn.Emit("update", &positionBuf, &socketBuf, string(gameData))
 		}
 
 	}

@@ -1,15 +1,21 @@
 package api
 
-type Entity struct {
-	X      int
-	Y      int
-	Radius float64
-	Color  string
+import (
+	"bytes"
+	"encoding/binary"
+)
+
+type Position struct {
+	X uint32
+	Y uint32
 }
 
-type Mouse struct {
-	X float64
-	Y float64
+func (p *Position) GetBytes() []byte {
+	buf := bytes.NewBuffer(make([]byte, 0, 8))
+	binary.Write(buf, binary.BigEndian, p.X)
+	binary.Write(buf, binary.BigEndian, p.Y)
+
+	return buf.Bytes()
 }
 
 type GameStats struct {
