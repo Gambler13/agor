@@ -13,7 +13,7 @@ type Mouse struct {
 }
 
 type GameStats struct {
-	PlayerId   string
+	PlayerID   string
 	NumPlayers int
 	Mass       float64
 	FoodEaten  int
@@ -22,6 +22,7 @@ type GameStats struct {
 }
 
 type MouseEvent struct {
-	X float32
-	Y float32
+	SeqID uint32
+	X     float32
+	Y     float32
 }

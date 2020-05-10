@@ -37,8 +37,9 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 		}
 
 		pmsg := PositionMsg{PlayerID: s.ID(),
-			X: float64(event.X),
-			Y: float64(event.Y),
+			X:     float64(event.X),
+			Y:     float64(event.Y),
+			SeqID: event.SeqID,
 		}
 
 		position <- pmsg
@@ -62,7 +63,7 @@ func startServer(addPlayer chan socketio.Conn, removePlayer chan string, positio
 	})
 
 	server.OnError("/", func(s socketio.Conn, e error) {
-		Log.Warnf("socket.io error: %v", e)
+		Log.Warnf("socket.io error for socket id %s: %v", s.ID(), e)
 	})
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
 		Log.Infof("socket closed connection, ID: %s, reason: %s", s.ID(), reason)

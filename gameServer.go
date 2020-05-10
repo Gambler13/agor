@@ -25,6 +25,7 @@ type PositionMsg struct {
 	X        float64
 	Y        float64
 	PlayerID string
+	SeqID    uint32
 }
 
 type World struct {
@@ -103,7 +104,7 @@ func (g *GameLoop) run() {
 			timeStart = now
 			g.onUpdate(delta)
 		case p := <-g.PositionCh:
-			g.World.handlePosition(p.PlayerID, p.X, p.Y)
+			g.World.handlePosition(p)
 		case c := <-g.AddPlayerCh:
 			g.World.addNewPlayer(c)
 		case i := <-g.RemovePlayerCh:
@@ -169,10 +170,10 @@ func (g *GameLoop) updateCells(delta float64, p *Player) {
 }
 
 type Player struct {
-	Id       int
-	SocketId string
-	//Normalized vector based on players center
+	Id        int
+	SocketId  string
 	Mouse     Position64
+	MouseSeq  uint32
 	Cells     []*Cell
 	conn      socketio.Conn
 	startTS   time.Time
@@ -217,7 +218,7 @@ func (p *Player) splitCells() {
 }
 
 func (w *World) addNewPlayer(conn socketio.Conn) {
-
+	Log.Infof("add player with socket id: %s", conn.ID())
 	player := &Player{
 		Id:       rand.Int(),
 		SocketId: conn.ID(),
@@ -233,18 +234,20 @@ func (w *World) addNewPlayer(conn socketio.Conn) {
 }
 
 func (w *World) removePlayer(socketId string) {
+	Log.Infof("remove player with socket id: %s", socketId)
 	delete(w.Players, socketId)
 }
 
-func (w *World) handlePosition(id string, x, y float64) {
-	p, ok := w.Players[id]
+func (w *World) handlePosition(msg PositionMsg) {
+	p, ok := w.Players[msg.PlayerID]
 	if !ok {
 		return
 	}
 	p.Mouse = Position64{
-		X: x,
-		Y: y,
+		X: msg.X,
+		Y: msg.Y,
 	}
+	p.MouseSeq = msg.SeqID
 }
 
 func (w *World) handleSplit(id string) {
@@ -299,7 +302,7 @@ func (w *World) updatePlayers(id string) {
 		}
 
 		gameData, err := json.Marshal(api.GameStats{
-			PlayerId:   fmt.Sprintf("%d", p.Id),
+			PlayerID:   fmt.Sprintf("%d", p.Id),
 			Mass:       p.getMass(),
 			FoodEaten:  p.foodEaten,
 			CellsEaten: 0,
@@ -314,7 +317,8 @@ func (w *World) updatePlayers(id string) {
 		socketBuf.Data = entityData
 
 		if p.conn != nil {
-			p.conn.Emit("update", string(posData), &socketBuf, string(gameData))
+			//TODO deadline / timeout?
+			go p.conn.Emit("update", string(posData), &socketBuf, string(gameData))
 		}
 
 	}

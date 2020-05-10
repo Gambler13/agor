@@ -125,10 +125,10 @@ func (c *Cell) eat(qt *QuadTree) {
 }
 
 func (c *Cell) rectangle() image.Rectangle {
-	xMin := float64(c.X) - c.Radius
-	yMin := float64(c.Y) - c.Radius
-	xMax := float64(c.X) + c.Radius
-	yMax := float64(c.Y) + c.Radius
+	xMin := c.X - c.Radius
+	yMin := c.Y - c.Radius
+	xMax := c.X + c.Radius
+	yMax := c.Y + c.Radius
 	return image.Rectangle{
 		Min: image.Point{
 			X: int(xMin),
